@@ -75,7 +75,7 @@
               </div>
               <div class="col-md-6 mb-3">
                 <strong>Lớp:</strong>
-                <p class="text-muted">{{ member.member.address || 'Chưa cập nhật' }}</p>
+                <p class="text-muted">{{ member.member.class || 'Chưa cập nhật' }}</p>
               </div>
             </div>
           </div>

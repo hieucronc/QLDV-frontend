@@ -214,6 +214,10 @@
                   <p class="fw-bold">{{ memberInfo.code }}</p>
                 </div>
                 <div class="col-md-6 mb-3">
+                  <label class="form-label text-muted">Lớp</label>
+                  <p class="fw-bold">{{ memberInfo.class || 'Chưa cập nhật' }}</p>
+                </div>
+                <div class="col-md-6 mb-3">
                   <label for="dob" class="form-label">Ngày sinh</label>
                   <input 
                     type="date" 
@@ -238,16 +242,6 @@
                     class="form-control" 
                     id="email" 
                     v-model="profileData.email"
-                  >
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label for="class" class="form-label">Lớp</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    id="class" 
-                    v-model="profileData.address"
-                    placeholder="Nhập lớp"
                   >
                 </div>
                 <div class="col-md-6 mb-3">
@@ -305,7 +299,7 @@ export default {
       dob: '',
       phone: '',
       email: '',
-      address: '',
+      class: '',
       avatar_url: ''
     })
     const passwordData = ref({
@@ -421,8 +415,11 @@ export default {
 
       try {
         saving.value = true
-        // Update member profile
-        await memberManagementService.updateMember(authStore.currentUser.member_id, profileData.value)
+        // Create a copy of profileData without the class field
+        const updateData = { ...profileData.value }
+        delete updateData.class
+        // Update member profile (excluding class field)
+        await memberManagementService.updateMember(authStore.currentUser.member_id, updateData)
         
         // Refresh profile data
         await refreshProfile()
@@ -443,7 +440,7 @@ export default {
           dob: newMemberInfo.dob || '',
           phone: newMemberInfo.phone || '',
           email: newMemberInfo.email || '',
-          address: newMemberInfo.address || '',
+          class: newMemberInfo.class || '',
           avatar_url: newMemberInfo.avatar_url || ''
         }
       }

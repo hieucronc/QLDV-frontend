@@ -135,6 +135,9 @@
             <button type="button" class="btn-close" @click="closeModals"></button>
           </div>
           <div class="modal-body">
+            <div v-if="errorMessage" class="alert alert-danger" role="alert">
+              {{ errorMessage }}
+            </div>
             <form @submit.prevent="saveMember">
               <div class="row g-3">
                 <div class="col-md-6">
@@ -165,12 +168,16 @@
                   >
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Địa chỉ</label>
+                  <label class="form-label">Lớp <span class="text-danger">*</span></label>
                   <input 
                     type="text" 
                     class="form-control" 
-                    v-model="formData.address"
+                    v-model="formData.class"
+                    required
+                    pattern="A\d{1}K\d{1}"
+                    title="Định dạng lớp: AxKy (ví dụ: A1K1)"
                   >
+                  <div class="form-text">Định dạng: AxKy (ví dụ: A1K1)</div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
@@ -289,6 +296,7 @@ export default {
     const saving = ref(false)
     const deleting = ref(false)
     const updatingSkills = ref(false)
+    const errorMessage = ref('')
     
     const filters = ref({
       search: ''
@@ -305,7 +313,7 @@ export default {
       full_name: '',
       email: '',
       phone: '',
-      address: '',
+      class: '',
       avatar_url: '',
       total_score: 0,
       password: ''
@@ -352,7 +360,7 @@ export default {
     const editMember = (member) => {
       formData.value = {
         ...member,
-        address: member.address || '',
+        class: member.class || '',
         password: '' // Don't show password in edit mode
       }
       showEditModal.value = true
@@ -361,6 +369,7 @@ export default {
     const saveMember = async () => {
       try {
         saving.value = true
+        errorMessage.value = ''
         
         const data = { ...formData.value }
         if (!showCreateModal.value && !data.password) {
@@ -376,7 +385,7 @@ export default {
         closeModals()
         fetchMembers()
       } catch (error) {
-        // Handle error silently
+        errorMessage.value = error.message
       } finally {
         saving.value = false
       }
@@ -462,7 +471,7 @@ export default {
         full_name: '',
         email: '',
         phone: '',
-        address: '',
+        class: '',
         avatar_url: '',
         total_score: 0,
         password: ''
@@ -509,6 +518,7 @@ export default {
       saving,
       deleting,
       updatingSkills,
+      errorMessage,
       filters,
       filteredMembers,
       showCreateModal,

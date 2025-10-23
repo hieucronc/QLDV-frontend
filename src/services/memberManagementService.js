@@ -31,7 +31,22 @@ class MemberManagementService {
     if (response.ok) {
       return await response.json()
     }
-    throw new Error('Failed to create member')
+    // Get error details from response
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      // If we can't parse JSON, use status text
+      throw new Error(`Failed to create member: ${response.statusText}`);
+    }
+    // Handle specific error messages from the backend
+    if (errorData.error === 'invalid_class_format') {
+      throw new Error('Định dạng lớp không hợp lệ. Vui lòng nhập theo định dạng AxKy (ví dụ: A1K1)');
+    } else if (errorData.error.startsWith('missing_field_')) {
+      const fieldName = errorData.error.replace('missing_field_', '');
+      throw new Error(`Thiếu thông tin bắt buộc: ${fieldName}`);
+    }
+    throw new Error(errorData.error || 'Failed to create member');
   }
 
   // Update an existing member
@@ -46,7 +61,22 @@ class MemberManagementService {
     if (response.ok) {
       return await response.json()
     }
-    throw new Error('Failed to update member')
+    // Get error details from response
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      // If we can't parse JSON, use status text
+      throw new Error(`Failed to update member: ${response.statusText}`);
+    }
+    // Handle specific error messages from the backend
+    if (errorData.error === 'invalid_class_format') {
+      throw new Error('Định dạng lớp không hợp lệ. Vui lòng nhập theo định dạng AxKy (ví dụ: A1K1)');
+    } else if (errorData.error.startsWith('missing_field_')) {
+      const fieldName = errorData.error.replace('missing_field_', '');
+      throw new Error(`Thiếu thông tin bắt buộc: ${fieldName}`);
+    }
+    throw new Error(errorData.error || 'Failed to update member');
   }
 
   // Delete a member

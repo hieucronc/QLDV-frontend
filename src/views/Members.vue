@@ -68,7 +68,7 @@
                 </div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <small class="text-muted">Lớp:</small>
-                  <small class="text-truncate" style="max-width: 60%;">{{ member.address || 'Chưa cập nhật' }}</small>
+                  <small class="text-truncate" style="max-width: 60%;">{{ member.class || 'Chưa cập nhật' }}</small>
                 </div>
                 
                 <div class="progress mb-3" style="height: 8px;">

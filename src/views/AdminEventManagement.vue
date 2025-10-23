@@ -186,17 +186,6 @@
                   </div>
                   <small class="text-muted">Kỹ năng sẽ được tạo tự động dựa trên mô tả sự kiện</small>
                   
-                  <!-- Display generated skills -->
-                  <div v-if="generatedSkillsList.length > 0" class="mt-3">
-                    <h6>Kỹ năng đã tạo:</h6>
-                    <ul class="list-group">
-                      <li v-for="skill in generatedSkillsList" :key="skill.id" class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ skill.name }}
-                        <span class="badge bg-primary rounded-pill">{{ skill.id }}</span>
-                      </li>
-                    </ul>
-                  </div>
-                  
                   <!-- Manual skill selection -->
                   <div class="mt-3">
                     <h6>Chọn kỹ năng thủ công:</h6>

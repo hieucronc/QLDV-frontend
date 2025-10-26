@@ -69,7 +69,7 @@
                 <tr v-for="event in filteredEvents" :key="event.id">
                   <td>
                     <div class="fw-medium">{{ event.title }}</div>
-                    <small class="text-muted">{{ event.description }}</small>
+                    <small class="text-muted text-truncate d-block" style="max-width: 200px;">{{ event.description }}</small>
                   </td>
                   <td>{{ formatDateTime(event.start_time) }}</td>
                   <td>{{ event.place }}</td>

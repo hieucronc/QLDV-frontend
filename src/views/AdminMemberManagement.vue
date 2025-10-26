@@ -7,19 +7,14 @@
         Thêm đoàn viên mới
       </button>
     </div>
-    
+
     <!-- Filters -->
     <div class="card shadow-sm mb-4">
       <div class="card-body">
         <div class="row g-3">
           <div class="col-md-9">
             <label class="form-label">Tìm kiếm</label>
-            <input 
-              type="text" 
-              class="form-control" 
-              placeholder="Tên, email, điện thoại..." 
-              v-model="filters.search"
-            >
+            <input type="text" class="form-control" placeholder="Tên, email, điện thoại..." v-model="filters.search">
           </div>
           <div class="col-md-3">
             <label class="form-label">&nbsp;</label>
@@ -33,7 +28,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Members List -->
     <div class="card shadow-sm">
       <div class="card-body">
@@ -42,7 +37,7 @@
             <span class="visually-hidden">Loading...</span>
           </div>
         </div>
-        
+
         <div v-else-if="filteredMembers.length > 0">
           <div class="table-responsive">
             <table class="table table-hover">
@@ -58,16 +53,13 @@
                 <tr v-for="member in filteredMembers" :key="member.id">
                   <td>
                     <div class="d-flex align-items-center">
-                      <img 
-                        :src="getAvatarUrl(member.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name)}&background=0d6efd&color=fff&size=40`" 
-                        class="rounded-circle me-3" 
-                        :alt="member.full_name"
-                        style="width: 40px; height: 40px; object-fit: cover;"
-                        @error="handleImageError"
-                      >
+                      <img
+                        :src="getAvatarUrl(member.avatar_url) || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name)}&background=0d6efd&color=fff&size=40`"
+                        class="rounded-circle me-3" :alt="member.full_name"
+                        style="width: 40px; height: 40px; object-fit: cover;" @error="handleImageError">
                       <div>
                         <div class="fw-medium">{{ member.full_name }}</div>
-                      <small class="text-muted">Mã: {{ member.code }}</small>
+                        <small class="text-muted">Mã: {{ member.code }}</small>
                       </div>
                     </div>
                   </td>
@@ -89,25 +81,13 @@
                   </td>
                   <td>
                     <div class="btn-group" role="group">
-                      <button 
-                        class="btn btn-sm btn-outline-primary" 
-                        @click="editMember(member)"
-                        title="Chỉnh sửa"
-                      >
+                      <button class="btn btn-sm btn-outline-primary" @click="editMember(member)" title="Chỉnh sửa">
                         <i class="bi bi-pencil"></i>
                       </button>
-                      <button 
-                        class="btn btn-sm btn-outline-info" 
-                        @click="viewMemberSkills(member)"
-                        title="Kỹ năng"
-                      >
+                      <button class="btn btn-sm btn-outline-info" @click="viewMemberSkills(member)" title="Kỹ năng">
                         <i class="bi bi-star"></i>
                       </button>
-                      <button 
-                        class="btn btn-sm btn-outline-danger" 
-                        @click="confirmDelete(member)"
-                        title="Xóa"
-                      >
+                      <button class="btn btn-sm btn-outline-danger" @click="confirmDelete(member)" title="Xóa">
                         <i class="bi bi-trash"></i>
                       </button>
                     </div>
@@ -117,7 +97,7 @@
             </table>
           </div>
         </div>
-        
+
         <div v-else class="text-center py-5">
           <i class="bi bi-people fs-1 d-block mb-2 text-muted"></i>
           <h5>Không tìm thấy đoàn viên</h5>
@@ -125,9 +105,10 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Create/Edit Member Modal -->
-    <div v-if="showCreateModal || showEditModal" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+    <div v-if="showCreateModal || showEditModal" class="modal fade show d-block"
+      style="background-color: rgba(0,0,0,0.5);">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -142,52 +123,27 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    v-model="formData.full_name"
-                    required
-                  >
+                  <input type="text" class="form-control" v-model="formData.full_name" required>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Email <span class="text-danger">*</span></label>
-                  <input 
-                    type="email" 
-                    class="form-control" 
-                    v-model="formData.email"
-                    required
-                  >
+                  <input type="email" class="form-control" v-model="formData.email" required>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                  <input 
-                    type="tel" 
-                    class="form-control" 
-                    v-model="formData.phone"
-                    required
-                  >
+                  <input type="tel" class="form-control" v-model="formData.phone" required>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Lớp <span class="text-danger">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    v-model="formData.class"
-                    required
-                    pattern="A\d{1}K\d{1}"
-                    title="Định dạng lớp: AxKy (ví dụ: A1K1)"
-                  >
-                  <div class="form-text">Định dạng: AxKy (ví dụ: A1K1)</div>
+                  <input type="text" class="form-control" v-model="formData.class" required
+                    pattern="[A-D]\d{1,2}K\d{1,2}" title="Định dạng lớp: AxKy (ví dụ: A1K1, B10K2)">
+                  <div class="form-text">Định dạng: AxKy (ví dụ: A1K1, B10K2)</div>
                 </div>
+
                 <div class="col-md-6">
                   <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
-                  <input 
-                    type="password" 
-                    class="form-control" 
-                    v-model="formData.password"
-                    :required="showCreateModal"
-                    :placeholder="showCreateModal ? '' : 'Để trống nếu không đổi mật khẩu'"
-                  >
+                  <input type="password" class="form-control" v-model="formData.password" :required="showCreateModal"
+                    :placeholder="showCreateModal ? '' : 'Để trống nếu không đổi mật khẩu'">
                 </div>
               </div>
             </form>
@@ -202,7 +158,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Member Skills Modal -->
     <div v-if="showSkillsModal" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
       <div class="modal-dialog">
@@ -217,24 +173,14 @@
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <span class="fw-medium">{{ skill.name }}</span>
                   <div class="input-group" style="width: 120px;">
-                    <input 
-                      type="number" 
-                      class="form-control form-control-sm" 
-                      v-model.number="skill.points"
-                      min="0"
-                    >
+                    <input type="number" class="form-control form-control-sm" v-model.number="skill.points" min="0">
                     <span class="input-group-text">điểm</span>
                   </div>
                 </div>
                 <div class="progress" style="height: 8px;">
-                  <div 
-                    class="progress-bar" 
-                    role="progressbar" 
-                    :style="{ width: `${Math.min(skill.points * 10, 100)}%` }"
-                    :aria-valuenow="skill.points"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                  ></div>
+                  <div class="progress-bar" role="progressbar"
+                    :style="{ width: `${Math.min(skill.points * 10, 100)}%` }" :aria-valuenow="skill.points"
+                    aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
               </div>
             </div>
@@ -253,7 +199,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
       <div class="modal-dialog">
@@ -289,7 +235,7 @@ export default {
   name: 'AdminMemberManagement',
   setup() {
     const authStore = useAuthStore()
-    
+
     const members = ref([])
     const availableSkills = ref([])
     const loading = ref(true)
@@ -297,16 +243,16 @@ export default {
     const deleting = ref(false)
     const updatingSkills = ref(false)
     const errorMessage = ref('')
-    
+
     const filters = ref({
       search: ''
     })
-    
+
     const showCreateModal = ref(false)
     const showEditModal = ref(false)
     const showSkillsModal = ref(false)
     const showDeleteModal = ref(false)
-    
+
     const formData = ref({
       id: '',
       code: '',
@@ -318,26 +264,26 @@ export default {
       total_score: 0,
       password: ''
     })
-    
+
     const selectedMember = ref(null)
     const memberSkills = ref([])
     const memberToDelete = ref(null)
-    
+
     const filteredMembers = computed(() => {
       let filtered = members.value
-      
+
       if (filters.value.search) {
         const search = filters.value.search.toLowerCase()
-        filtered = filtered.filter(m => 
-          m.full_name.toLowerCase().includes(search) || 
+        filtered = filtered.filter(m =>
+          m.full_name.toLowerCase().includes(search) ||
           m.email.toLowerCase().includes(search) ||
           m.phone?.toLowerCase().includes(search)
         )
       }
-      
+
       return filtered
     })
-    
+
     const fetchMembers = async () => {
       try {
         loading.value = true
@@ -348,7 +294,7 @@ export default {
         loading.value = false
       }
     }
-    
+
     const fetchSkills = async () => {
       try {
         availableSkills.value = await memberManagementService.getSkills()
@@ -356,7 +302,7 @@ export default {
         // Handle error silently
       }
     }
-    
+
     const editMember = (member) => {
       formData.value = {
         ...member,
@@ -365,23 +311,23 @@ export default {
       }
       showEditModal.value = true
     }
-    
+
     const saveMember = async () => {
       try {
         saving.value = true
         errorMessage.value = ''
-        
+
         const data = { ...formData.value }
         if (!showCreateModal.value && !data.password) {
           delete data.password // Don't update password if empty
         }
-        
+
         if (showCreateModal.value) {
           await memberManagementService.createMember(data)
         } else {
           await memberManagementService.updateMember(formData.value.id, data)
         }
-        
+
         closeModals()
         fetchMembers()
       } catch (error) {
@@ -390,18 +336,18 @@ export default {
         saving.value = false
       }
     }
-    
+
     const viewMemberSkills = async (member) => {
       try {
         selectedMember.value = member
-        
+
         // Fetch member skills
         const skills = await memberManagementService.getMemberSkills(member.id)
         memberSkills.value = skills.map(skill => ({
           ...skill,
           points: skill.points || 0
         }))
-        
+
         // Add skills that member doesn't have yet
         availableSkills.value.forEach(availableSkill => {
           if (!memberSkills.value.find(s => s.id === availableSkill.id)) {
@@ -411,26 +357,26 @@ export default {
             })
           }
         })
-        
+
         showSkillsModal.value = true
       } catch (error) {
         // Handle error silently
       }
     }
-    
+
     const updateMemberSkills = async () => {
       try {
         updatingSkills.value = true
-        
+
         const skillsData = memberSkills.value
           .filter(skill => skill.points > 0)
           .map(skill => ({
             skill_id: skill.id,
             points: skill.points
           }))
-        
+
         await memberManagementService.updateMemberSkills(selectedMember.value.id, skillsData)
-        
+
         showSkillsModal.value = false
         fetchMembers()
       } catch (error) {
@@ -439,12 +385,12 @@ export default {
         updatingSkills.value = false
       }
     }
-    
+
     const confirmDelete = (member) => {
       memberToDelete.value = member
       showDeleteModal.value = true
     }
-    
+
     const deleteMember = async () => {
       try {
         deleting.value = true
@@ -457,13 +403,13 @@ export default {
         deleting.value = false
       }
     }
-    
+
     const closeModals = () => {
       showCreateModal.value = false
       showEditModal.value = false
       resetForm()
     }
-    
+
     const resetForm = () => {
       formData.value = {
         id: '',
@@ -477,7 +423,7 @@ export default {
         password: ''
       }
     }
-    
+
     const getAvatarUrl = (avatarUrl) => {
       if (!avatarUrl) return null
       // Check if it's a filename (not a full URL)
@@ -505,12 +451,12 @@ export default {
       if (!dateString) return 'N/A'
       return new Date(dateString).toLocaleDateString('vi-VN')
     }
-    
+
     onMounted(() => {
       fetchMembers()
       fetchSkills()
     })
-    
+
     return {
       authStore,
       members,

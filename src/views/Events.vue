@@ -59,7 +59,7 @@
                 </span>
               </div>
               
-              <p class="card-text text-muted flex-grow-1">{{ event.description }}</p>
+                <p class="card-text text-muted flex-grow-1 text-truncate">{{ event.description }}</p>
               
               <div class="event-details mt-auto">
                 <div class="d-flex justify-content-between align-items-center mb-2">

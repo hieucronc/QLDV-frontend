@@ -124,26 +124,31 @@
                 <div class="col-md-6">
                   <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
                   <input type="text" class="form-control" v-model="formData.full_name" required>
+                  <small v-if="validationErrors.full_name" class="text-danger">{{ validationErrors.full_name }}</small>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Email <span class="text-danger">*</span></label>
                   <input type="email" class="form-control" v-model="formData.email" required>
+                  <small v-if="validationErrors.email" class="text-danger">{{ validationErrors.email }}</small>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
                   <input type="tel" class="form-control" v-model="formData.phone" required>
+                  <small v-if="validationErrors.phone" class="text-danger">{{ validationErrors.phone }}</small>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Lớp <span class="text-danger">*</span></label>
                   <input type="text" class="form-control" v-model="formData.class" required
                     pattern="[A-D]\d{1,2}K\d{1,2}" title="Định dạng lớp: AxKy (ví dụ: A1K1, B10K2)">
                   <div class="form-text">Định dạng: AxKy (ví dụ: A1K1, B10K2)</div>
+                  <small v-if="validationErrors.class" class="text-danger">{{ validationErrors.class }}</small>
                 </div>
 
                 <div class="col-md-6">
                   <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
                   <input type="password" class="form-control" v-model="formData.password" :required="showCreateModal"
                     :placeholder="showCreateModal ? '' : 'Để trống nếu không đổi mật khẩu'">
+                  <small v-if="validationErrors.password" class="text-danger">{{ validationErrors.password }}</small>
                 </div>
               </div>
             </form>
@@ -243,6 +248,7 @@ export default {
     const deleting = ref(false)
     const updatingSkills = ref(false)
     const errorMessage = ref('')
+  const validationErrors = ref({})
 
     const filters = ref({
       search: ''
@@ -309,6 +315,7 @@ export default {
         class: member.class || '',
         password: '' // Don't show password in edit mode
       }
+      validationErrors.value = {}
       showEditModal.value = true
     }
 
@@ -316,6 +323,12 @@ export default {
       try {
         saving.value = true
         errorMessage.value = ''
+
+        // Client-side validation
+        if (!validateMemberForm()) {
+          alert('Vui lòng sửa các lỗi trong biểu mẫu trước khi lưu.')
+          return
+        }
 
         const data = { ...formData.value }
         if (!showCreateModal.value && !data.password) {
@@ -335,6 +348,50 @@ export default {
       } finally {
         saving.value = false
       }
+    }
+
+    const validateMemberForm = () => {
+      validationErrors.value = {}
+      const fd = formData.value || {}
+
+      const isEmpty = (v) => v === null || v === undefined || String(v).trim() === ''
+
+      if (isEmpty(fd.full_name)) {
+        validationErrors.value.full_name = 'Họ và tên là bắt buộc.'
+      }
+
+      if (isEmpty(fd.email)) {
+        validationErrors.value.email = 'Email là bắt buộc.'
+      } else {
+        // simple email regex
+        const re = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+        if (!re.test(fd.email)) validationErrors.value.email = 'Email không hợp lệ.'
+      }
+
+      if (isEmpty(fd.phone)) {
+        validationErrors.value.phone = 'Số điện thoại là bắt buộc.'
+      } else {
+        const phoneRe = /^[0-9()+\-\s]{6,20}$/
+        if (!phoneRe.test(fd.phone)) validationErrors.value.phone = 'Số điện thoại không hợp lệ.'
+      }
+
+      if (isEmpty(fd.class)) {
+        validationErrors.value.class = 'Lớp là bắt buộc.'
+      } else {
+        const classRe = /^[A-D]\d{1,2}K\d{1,2}$/
+        if (!classRe.test(fd.class)) validationErrors.value.class = 'Định dạng lớp không hợp lệ (ví dụ: A1K1).'
+      }
+
+      // Password required only when creating
+      if (showCreateModal.value) {
+        if (isEmpty(fd.password)) {
+          validationErrors.value.password = 'Mật khẩu là bắt buộc khi tạo tài khoản.'
+        } else if (String(fd.password).length < 6) {
+          validationErrors.value.password = 'Mật khẩu phải có ít nhất 6 ký tự.'
+        }
+      }
+
+      return Object.keys(validationErrors.value).length === 0
     }
 
     const viewMemberSkills = async (member) => {
@@ -408,6 +465,7 @@ export default {
       showCreateModal.value = false
       showEditModal.value = false
       resetForm()
+      validationErrors.value = {}
     }
 
     const resetForm = () => {
@@ -422,6 +480,7 @@ export default {
         total_score: 0,
         password: ''
       }
+      validationErrors.value = {}
     }
 
     const getAvatarUrl = (avatarUrl) => {
@@ -465,6 +524,7 @@ export default {
       deleting,
       updatingSkills,
       errorMessage,
+      validationErrors,
       filters,
       filteredMembers,
       showCreateModal,

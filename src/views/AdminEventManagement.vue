@@ -120,7 +120,12 @@
             <button type="button" class="btn-close" @click="closeModals"></button>
           </div>
           <div class="modal-body">
-            <form @submit.prevent="saveEvent">
+            <div v-if="modalLoading" class="text-center py-5">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            <form v-else @submit.prevent="saveEvent">
               <div class="row g-3">
                 <div class="col-md-8">
                   <label class="form-label">Tên sự kiện <span class="text-danger">*</span></label>
@@ -130,6 +135,7 @@
                     v-model="formData.title"
                     required
                   >
+                  <small v-if="validationErrors.title" class="text-danger">{{ validationErrors.title }}</small>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Số lượng tối đa <span class="text-danger">*</span></label>
@@ -140,6 +146,7 @@
                     min="1"
                     required
                   >
+                  <small v-if="validationErrors.capacity" class="text-danger">{{ validationErrors.capacity }}</small>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Thời gian bắt đầu <span class="text-danger">*</span></label>
@@ -149,6 +156,7 @@
                     v-model="formData.start_time"
                     required
                   >
+                  <small v-if="validationErrors.start_time" class="text-danger">{{ validationErrors.start_time }}</small>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Thời gian kết thúc <span class="text-danger">*</span></label>
@@ -158,6 +166,7 @@
                     v-model="formData.end_time"
                     required
                   >
+                  <small v-if="validationErrors.end_time" class="text-danger">{{ validationErrors.end_time }}</small>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Địa điểm <span class="text-danger">*</span></label>
@@ -167,14 +176,18 @@
                     v-model="formData.place"
                     required
                   >
+                  <small v-if="validationErrors.place" class="text-danger">{{ validationErrors.place }}</small>
                 </div>
                 <div class="col-12">
-                  <label class="form-label">Mô tả</label>
+                  <label class="form-label">Mô tả <span class="text-danger">*</span></label>
+
                   <textarea 
                     class="form-control" 
                     v-model="formData.description"
                     rows="3"
+                    required
                   ></textarea>
+                  <small v-if="validationErrors.description" class="text-danger">{{ validationErrors.description }}</small>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Kỹ năng yêu cầu</label>
@@ -281,6 +294,7 @@ export default {
     const loading = ref(true)
     const saving = ref(false)
     const deleting = ref(false)
+  const validationErrors = ref({})
     
     const filters = ref({
       status: '',
@@ -290,6 +304,7 @@ export default {
     const showCreateModal = ref(false)
     const showEditModal = ref(false)
     const showDeleteModal = ref(false)
+  const modalLoading = ref(false)
     const generatedSkillsList = ref([])
     const selectedSkillIds = ref([])
     const skillBasePoints = ref({})
@@ -362,41 +377,75 @@ export default {
       }
     }
     
-    const editEvent = (event) => {
-      // Reset skill selection
+    const editEvent = async (event) => {
+      // show modal and spinner immediately
       selectedSkillIds.value = []
       skillBasePoints.value = {}
-      
+      modalLoading.value = true
+      showEditModal.value = true
+
+      // Ensure skills are loaded (so checkboxes exist)
+      if (!availableSkills.value || availableSkills.value.length === 0) {
+        await fetchSkills()
+      }
+
+      // Fetch full event details from backend to get required_skills
+      let full = null
+      try {
+        full = await eventService.getEventById(event.id)
+      } catch (e) {
+        // fallback to provided event if request fails
+        full = { event }
+      }
+
+      const eData = full.event || event
+
       // Initialize form data
       formData.value = {
-        ...event,
-        title: event.title,
-        place: event.place,
-        capacity: event.capacity,
-        start_time: new Date(event.start_time).toISOString().slice(0, 16),
-        end_time: new Date(event.end_time).toISOString().slice(0, 16),
+        ...eData,
+        title: eData.title,
+        place: eData.place,
+        capacity: eData.capacity,
+        start_time: eData.start_time ? new Date(eData.start_time).toISOString().slice(0, 16) : '',
+        end_time: eData.end_time ? new Date(eData.end_time).toISOString().slice(0, 16) : '',
         required_skills: []
       }
-      
-      // Initialize skill selection and base points
-      if (event.required_skills && event.required_skills.length > 0) {
-        event.required_skills.forEach(skill => {
-          selectedSkillIds.value.push(skill.id)
-          skillBasePoints.value[skill.id] = skill.base_points || 1
+
+      // Initialize skill selection and base points from required_skills returned by API
+      const reqSkills = full.required_skills || eData.required_skills || []
+      if (reqSkills && reqSkills.length > 0) {
+        reqSkills.forEach(skill => {
+          // backend shape is { id, base_points, weight, code, name }
+          const rawId = skill.id ?? skill.skill_id ?? (skill.skill && (skill.skill.id ?? skill.skill.skill_id))
+          if (rawId === undefined || rawId === null) return
+          const idNum = Number(rawId)
+
+          if (!selectedSkillIds.value.includes(idNum)) selectedSkillIds.value.push(idNum)
+
+          const basePts = skill.base_points ?? skill.basePoints ?? 1
+          // store keyed by numeric id (JS object keys are strings but access via number works)
+          skillBasePoints.value[idNum] = basePts
+
           formData.value.required_skills.push({
-            id: skill.id,
-            base_points: skill.base_points || 1,
-            weight: skill.weight || 1
+            id: idNum,
+            base_points: basePts,
+            weight: skill.weight ?? 1
           })
         })
       }
-      
-      showEditModal.value = true
+
+      modalLoading.value = false
     }
     
     const saveEvent = async () => {
       try {
         saving.value = true
+        // Client-side validation
+        if (!validateForm()) {
+          // don't proceed if validation fails
+          alert('Vui lòng sửa các lỗi trong biểu mẫu trước khi lưu.')
+          return
+        }
         
         // Prepare required skills data with base points
         const requiredSkills = selectedSkillIds.value.map(skillId => ({
@@ -424,6 +473,58 @@ export default {
       } finally {
         saving.value = false
       }
+    }
+
+    const validateForm = () => {
+      validationErrors.value = {}
+      const fd = formData.value || {}
+
+      // Helper to check non-empty after trimming
+      const isEmpty = (v) => {
+        return v === null || v === undefined || String(v).trim() === ''
+      }
+
+      if (isEmpty(fd.title)) {
+        validationErrors.value.title = 'Tên sự kiện là bắt buộc.'
+      }
+
+      if (isEmpty(fd.description)) {
+        validationErrors.value.description = 'Mô tả là bắt buộc.'
+      }
+
+      if (isEmpty(fd.place)) {
+        validationErrors.value.place = 'Địa điểm là bắt buộc.'
+      }
+
+      if (isEmpty(fd.start_time)) {
+        validationErrors.value.start_time = 'Thời gian bắt đầu là bắt buộc.'
+      }
+
+      if (isEmpty(fd.end_time)) {
+        validationErrors.value.end_time = 'Thời gian kết thúc là bắt buộc.'
+      }
+
+      // capacity must be a positive integer
+      const cap = parseInt(fd.capacity, 10)
+      if (Number.isNaN(cap) || cap < 1) {
+        validationErrors.value.capacity = 'Số lượng tối đa phải là số nguyên lớn hơn hoặc bằng 1.'
+      }
+
+      // If both times provided, ensure start < end
+      if (!validationErrors.value.start_time && !validationErrors.value.end_time) {
+        const start = new Date(fd.start_time)
+        const end = new Date(fd.end_time)
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          // invalid dates
+          if (isNaN(start.getTime())) validationErrors.value.start_time = 'Thời gian bắt đầu không hợp lệ.'
+          if (isNaN(end.getTime())) validationErrors.value.end_time = 'Thời gian kết thúc không hợp lệ.'
+        } else if (start >= end) {
+          validationErrors.value.start_time = 'Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc.'
+          validationErrors.value.end_time = 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu.'
+        }
+      }
+
+      return Object.keys(validationErrors.value).length === 0
     }
     
     const confirmDelete = (event) => {
@@ -469,6 +570,7 @@ export default {
       selectedSkillIds.value = []
       skillBasePoints.value = {}
       generatedSkillsList.value = []
+      validationErrors.value = {}
     }
     
     const resetForm = () => {
@@ -481,6 +583,7 @@ export default {
         capacity: 50,
         required_skills: []
       }
+      validationErrors.value = {}
     }
     
     // Helper: chuẩn hoá text (lowercase + bỏ dấu + bỏ ký tự thừa)
@@ -638,6 +741,7 @@ const generateSkills = () => {
       loading,
       saving,
       deleting,
+      modalLoading,
       filters,
       filteredEvents,
       showCreateModal,
@@ -648,6 +752,7 @@ const generateSkills = () => {
       generatedSkillsList,
       selectedSkillIds,
       skillBasePoints,
+      validationErrors,
       fetchEvents,
       editEvent,
       saveEvent,

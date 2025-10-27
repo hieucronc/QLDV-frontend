@@ -12,9 +12,16 @@
     <div class="card shadow-sm mb-4">
       <div class="card-body">
         <div class="row g-3">
-          <div class="col-md-9">
+          <div class="col-md-6">
             <label class="form-label">Tìm kiếm</label>
             <input type="text" class="form-control" placeholder="Tên, email, điện thoại..." v-model="filters.search">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Lọc theo lớp</label>
+            <select class="form-select" v-model="classFilter">
+              <option value="">Tất cả</option>
+              <option v-for="cls in availableClasses" :key="cls" :value="cls">{{ cls }}</option>
+            </select>
           </div>
           <div class="col-md-3">
             <label class="form-label">&nbsp;</label>
@@ -44,6 +51,7 @@
               <thead>
                 <tr>
                   <th>Đoàn viên</th>
+                  <th>Lớp</th>
                   <th>Thông tin liên hệ</th>
                   <th>Điểm tổng</th>
                   <th>Thao tác</th>
@@ -59,9 +67,15 @@
                         style="width: 40px; height: 40px; object-fit: cover;" @error="handleImageError">
                       <div>
                         <div class="fw-medium">{{ member.full_name }}</div>
-                        <small class="text-muted">Mã: {{ member.code }}</small>
+                        <div>
+                          <small class="text-muted">Mã: {{ member.code }}</small>
+                        </div>
                       </div>
                     </div>
+                  </td>
+                  <td>
+                    <span v-if="member.class" class="badge bg-secondary">{{ member.class }}</span>
+                    <span v-else class="text-muted">-</span>
                   </td>
                   <td>
                     <div>
@@ -241,8 +255,10 @@ export default {
   setup() {
     const authStore = useAuthStore()
 
-    const members = ref([])
-    const availableSkills = ref([])
+  const members = ref([])
+  const availableSkills = ref([])
+  const availableClasses = ref([])
+  const classFilter = ref('')
     const loading = ref(true)
     const saving = ref(false)
     const deleting = ref(false)
@@ -287,13 +303,22 @@ export default {
         )
       }
 
+      if (classFilter.value) {
+        filtered = filtered.filter(m => m.class === classFilter.value)
+      }
+
       return filtered
     })
 
     const fetchMembers = async () => {
       try {
         loading.value = true
-        members.value = await memberManagementService.getMembers()
+        const data = await memberManagementService.getMembers()
+        members.value = data
+
+        // extract classes for filter dropdown
+        const classes = [...new Set(data.map(m => m.class).filter(Boolean))]
+        availableClasses.value = classes.sort()
       } catch (error) {
         // Handle error silently
       } finally {
@@ -525,6 +550,8 @@ export default {
       updatingSkills,
       errorMessage,
       validationErrors,
+      availableClasses,
+      classFilter,
       filters,
       filteredMembers,
       showCreateModal,

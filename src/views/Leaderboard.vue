@@ -180,7 +180,7 @@ export default {
     const loading = ref(true);
     const classFilter = ref("");
     const availableClasses = ref([]);
-    const rankingType = ref("member"); // 'member' or 'class'
+  const rankingType = ref("class"); // default to 'class' view on open
     const classRankings = ref([]); // Store class rankings separately
     const classRankingsLoading = ref(false); // Loading state for class rankings
 
@@ -361,9 +361,15 @@ export default {
       }, 50);
     };
 
-    onMounted(() => {
-      fetchMembers();
-      
+    onMounted(async () => {
+      // Fetch members first
+      await fetchMembers();
+
+      // If default view is class, calculate class rankings immediately
+      if (rankingType.value === 'class') {
+        calculateClassRankings();
+      }
+
       // Initialize lazy loading after a short delay to ensure DOM is ready
       setTimeout(() => {
         initLazyLoading();

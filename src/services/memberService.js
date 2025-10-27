@@ -18,6 +18,15 @@ class MemberService {
     }
     throw new Error('Failed to fetch member')
   }
+
+  // Get attendances (events) for a member
+  async getMemberAttendances(memberId) {
+    const response = await fetch(`${API_BASE_URL}/members/${memberId}/attendances`)
+    if (response.ok) {
+      return await response.json()
+    }
+    throw new Error('Failed to fetch member attendances')
+  }
 }
 
 export default new MemberService()

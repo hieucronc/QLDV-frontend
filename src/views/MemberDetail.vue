@@ -114,6 +114,45 @@
             </div>
           </div>
         </div>
+        
+        <!-- Attendances (events the member attended) -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-calendar-check me-2"></i>
+              Sự kiện đã tham gia
+            </h5>
+            <div>
+              <span class="badge bg-primary me-2">{{ attendances.length }} sự kiện</span>
+              <button class="btn btn-sm btn-outline-secondary" @click="fetchAttendances(member.member.code)">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div v-if="attendancesLoading" class="text-center py-3">
+              <div class="spinner-border" role="status"></div>
+            </div>
+            <div v-else-if="attendances && attendances.length > 0">
+              <div class="list-group">
+                <div v-for="a in attendances" :key="a.event.id + (a.checkin_at || '')" class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <router-link :to="`/events/${a.event.id}`" class="fw-medium">{{ a.event.title || a.event.id }}</router-link>
+                    <div class="small text-muted">{{ a.event.place || 'Không rõ địa điểm' }}</div>
+                  </div>
+                  <div class="text-end small text-muted">
+                    <div v-if="a.checkin_at">{{ new Date(a.checkin_at).toLocaleString('vi-VN') }}</div>
+                    <div v-else>—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center text-muted py-4">
+              <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+              Chưa có sự kiện nào được điểm danh
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -142,6 +181,8 @@ export default {
     
     const member = ref(null)
     const loading = ref(true)
+    const attendances = ref([])
+    const attendancesLoading = ref(false)
     
     const fetchMemberDetail = async () => {
       try {
@@ -151,10 +192,30 @@ export default {
         // Fetch member details
         const data = await memberService.getMemberById(memberId)
         member.value = data
+        // fetch attendances after member loads
+        fetchAttendances(memberId)
       } catch (error) {
         // Handle error silently
       } finally {
         loading.value = false
+      }
+    }
+
+    const fetchAttendances = async (memberId) => {
+      try {
+        attendancesLoading.value = true
+        const list = await memberService.getMemberAttendances(memberId)
+        // Expect list of { event_id, event(optional), checkin_at, method }
+        attendances.value = (list || []).map(a => ({
+          event: a.event || { id: a.event_id },
+          checkin_at: a.checkin_at || a.checked_at || a.created_at,
+          method: a.method
+        })).reverse() // show newest first
+      } catch (e) {
+        console.debug('fetchAttendances error:', e)
+        attendances.value = []
+      } finally {
+        attendancesLoading.value = false
       }
     }
     
@@ -186,6 +247,8 @@ export default {
     return {
       member,
       loading,
+      attendances,
+      attendancesLoading,
       refreshData,
       handleImageError,
       getAvatarUrl
@@ -193,6 +256,7 @@ export default {
   }
 }
 </script>
+
 
 <style scoped>
 .card {

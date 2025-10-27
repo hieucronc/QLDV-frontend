@@ -130,6 +130,15 @@ class EventService {
     throw new Error('Failed to scan attendance')
   }
 
+  // Get attendees for an event
+  async getEventAttendees(eventId) {
+    const response = await fetch(`${API_BASE_URL}/events/${eventId}/attendances`)
+    if (response.ok) {
+      return await response.json()
+    }
+    throw new Error('Failed to fetch event attendees')
+  }
+
 }
 
 export default new EventService()

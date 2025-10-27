@@ -225,6 +225,48 @@
           </div>
         </div>
         
+        <!-- Participants List -->
+        <div class="card shadow-sm mt-4">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-people-fill me-2"></i>
+              Đoàn viên đã tham gia
+            </h5>
+            <div>
+              <span class="badge bg-primary me-2">{{ participants.length }} đã điểm danh</span>
+              <button class="btn btn-sm btn-outline-secondary" @click="fetchParticipants(eventData.event.id)">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div v-if="participantsLoading" class="text-center py-4">
+              <div class="spinner-border" role="status"></div>
+            </div>
+            <div v-else-if="participants && participants.length > 0">
+              <div class="list-group">
+                <div v-for="p in participants" :key="p.member?.id || p.member_id || p.id" class="list-group-item d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center">
+                    <img :src="p.member?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.member?.full_name||p.member?.id)}&background=0d6efd&color=fff&size=40`" class="rounded-circle me-3" style="width:40px;height:40px;object-fit:cover;" />
+                    <div>
+                      <div class="fw-medium">{{ p.member?.full_name || p.member?.id }}</div>
+                      <small class="text-muted">Mã: {{ p.member?.id }}</small>
+                    </div>
+                  </div>
+                  <div class="text-end small text-muted">
+                    <div v-if="p.checkin_at">{{ formatDateTime(p.checkin_at) }}</div>
+                    <div v-else>—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center text-muted py-4">
+              <i class="bi bi-people-x fs-1 d-block mb-2"></i>
+              Chưa có đoàn viên nào được điểm danh
+            </div>
+          </div>
+        </div>
+        
         <!-- Score Calculation Modal -->
         <div v-if="showScoreCalculation" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
           <div class="modal-dialog modal-lg">
@@ -387,6 +429,8 @@ export default {
     const eventData = ref(null)
     const loading = ref(true)
     const processing = ref(false)
+  const participants = ref([])
+  const participantsLoading = ref(false)
     const showQRScanner = ref(false)
     const showScoreCalculation = ref(false)
     const scanResult = ref(null)
@@ -416,16 +460,46 @@ export default {
         
         eventData.value = {
           ...data,
+          // ensure arrays exist so template can safely read .length
+          required_skills: data.required_skills || [],
+          suggestions: data.suggestions || [],
           event: {
             ...data.event,
             status
           }
         }
+        // Attempt to fetch participants (if backend exposes the endpoint)
+        fetchParticipants(eventId)
       } catch (error) {
         // có thể log nếu cần
         console.debug('fetchEventDetail error:', error)
       } finally {
         loading.value = false
+      }
+    }
+
+    const fetchParticipants = async (eventId) => {
+      try {
+        participantsLoading.value = true
+        const list = await eventService.getEventAttendees(eventId)
+        // Expecting array of { member_id, member (optional), checkin_at }
+        participants.value = (list || []).map(p => {
+          if (p.member) return p
+          return {
+            member: {
+              id: p.member_id || p.memberId || p.member || p.code,
+              full_name: p.full_name || p.name || p.member_name || (p.member && p.member.full_name) || p.member || p.member_id,
+              avatar_url: p.avatar_url || (p.member && p.member.avatar_url) || null
+            },
+            checkin_at: p.checkin_at || p.checked_at || p.created_at || null
+          }
+        })
+      } catch (e) {
+        // ignore if endpoint missing
+        console.debug('fetchParticipants error (maybe backend missing endpoint):', e)
+        participants.value = []
+      } finally {
+        participantsLoading.value = false
       }
     }
 
@@ -705,6 +779,8 @@ const initQRScanner = async () => {
       showQRScanner,
       showScoreCalculation,
       scanResult,
+      participants,
+      participantsLoading,
       authStore,
       manualMemberCode,
       refreshData,
@@ -714,6 +790,7 @@ const initQRScanner = async () => {
       initQRScanner,
       handleQRCodeResult,
       handleManualAttendance,
+      fetchParticipants,
       cleanupScanner,
       qrVideo
     }
